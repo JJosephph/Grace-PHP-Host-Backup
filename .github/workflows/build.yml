@@ -36,5 +36,4 @@ jobs:
         with:
           files: |
             release/Grace-PHP-Host-Backup-*-portable.exe
-            release/恩典PHP主机一键备份.exe
             config.example.json

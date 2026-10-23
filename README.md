@@ -33,7 +33,7 @@
 
 前往 Releases 下载：
 
-`Grace-PHP-Host-Backup-0.2.0-portable.exe`
+`Grace-PHP-Host-Backup-0.2.1-portable.exe`
 
 这是便携版 Windows 程序，不需要安装。第一次运行后填写 FTP 信息即可。
 
@@ -87,7 +87,7 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 构建结果位于：
 
 ```text
-release\Grace-PHP-Host-Backup-0.2.0-portable.exe
+release\Grace-PHP-Host-Backup-0.2.1-portable.exe
 release\恩典PHP主机一键备份.exe
 ```
 
@@ -95,7 +95,7 @@ release\恩典PHP主机一键备份.exe
 
 ## 版本
 
-当前版本：`v0.2.0`
+当前版本：`v0.2.1`
 
 ## 作者
 

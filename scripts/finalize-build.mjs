@@ -1,15 +1,15 @@
-import { copyFile, mkdir, readdir, stat } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, stat } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { createReadStream } from 'node:fs'
 import { join, resolve } from 'node:path'
 
 const projectRoot = resolve(import.meta.dirname, '..')
 const releaseDir = join(projectRoot, 'release')
-const files = await readdir(releaseDir)
-const portable = files.find((name) => /^Grace-PHP-Host-Backup-.+-portable\.exe$/i.test(name))
+const packageJson = JSON.parse(await readFile(join(projectRoot, 'package.json'), 'utf8'))
+const portable = `Grace-PHP-Host-Backup-${packageJson.version}-portable.exe`
 
-if (!portable) {
-  throw new Error('未找到 portable EXE 构建产物。')
+if (!(await stat(join(releaseDir, portable)).catch(() => null))) {
+  throw new Error(`未找到 portable EXE 构建产物：${portable}`)
 }
 
 const source = join(releaseDir, portable)

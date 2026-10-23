@@ -289,7 +289,7 @@ export function App(): React.JSX.Element {
               </div>
             </div>
             <div className="mt-3 flex items-center justify-between border-t border-border pt-2.5">
-              <span className="font-mono text-[10px] text-muted">v0.2.0</span>
+              <span className="font-mono text-[10px] text-muted">v0.2.1</span>
               <span className={cn('text-[10px]', dirty ? 'text-warning' : 'text-muted')}>
                 {dirty ? '有未保存修改' : '设置已同步'}
               </span>
