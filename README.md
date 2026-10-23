@@ -23,9 +23,13 @@
 
 前往 Releases 下载：
 
-`恩典PHP主机一键备份.exe`
+`Grace-PHP-Host-Backup.exe`
 
 这是单文件 Windows 程序，不需要安装 Python。第一次运行后填写 FTP 信息即可。
+
+本地构建也会同时生成带中文文件名的版本：
+
+`恩典PHP主机一键备份.exe`
 
 ## 使用步骤
 

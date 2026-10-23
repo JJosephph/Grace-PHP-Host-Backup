@@ -35,6 +35,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/恩典PHP主机一键备份.exe
+            dist/Grace-PHP-Host-Backup.exe
             dist/config.example.json
 
