@@ -17,12 +17,12 @@ export function Tooltip({
         <TooltipPrimitive.Content
           sideOffset={7}
           className={cn(
-            'z-50 rounded-md border border-border-strong bg-[#171c25] px-2.5 py-1.5 text-xs text-foreground shadow-xl',
+            'z-50 rounded-md border border-border-strong bg-surface-strong px-3 py-2 text-sm text-foreground shadow-xl',
             'data-[state=delayed-open]:animate-in data-[state=closed]:animate-out'
           )}
         >
           {content}
-          <TooltipPrimitive.Arrow className="fill-[#171c25]" />
+          <TooltipPrimitive.Arrow className="fill-[var(--surface-strong)]" />
         </TooltipPrimitive.Content>
       </TooltipPrimitive.Portal>
     </TooltipPrimitive.Root>

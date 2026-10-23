@@ -145,6 +145,7 @@ export interface AppApi {
   resumeTransfer: () => Promise<void>
   openPath: (path: string) => Promise<void>
   revealPath: (path: string) => Promise<void>
+  openExternal: (url: string) => Promise<void>
   onLog: (callback: (entry: LogEntry) => void) => () => void
   onStatus: (callback: (status: OperationStatus) => void) => () => void
   onScanProgress: (callback: (progress: ScanProgress) => void) => () => void

@@ -4,25 +4,28 @@
 
 :root {
   color-scheme: dark;
-  --background: #07090d;
-  --foreground: #f4f7fb;
-  --surface: #0d1016;
-  --surface-strong: #11151d;
-  --surface-hover: #171c25;
-  --muted: #8d98aa;
-  --muted-strong: #b8c1ce;
-  --border: #252c38;
-  --border-strong: #354052;
-  --primary: #69e6c4;
-  --primary-foreground: #06120f;
-  --accent: #63b3ff;
-  --danger: #ff6b78;
-  --warning: #ffc857;
-  --success: #69e6c4;
+  --background: #0f141c;
+  --background-deep: #111923;
+  --foreground: #ffffff;
+  --surface: #18202b;
+  --surface-strong: #202a38;
+  --surface-hover: #293647;
+  --muted: #d0dae7;
+  --muted-strong: #f0f4f9;
+  --border: #40506a;
+  --border-strong: #61728c;
+  --primary: #6fe7c6;
+  --primary-foreground: #071712;
+  --accent: #78c2ff;
+  --danger: #ff7b88;
+  --warning: #ffd166;
+  --success: #6fe7c6;
+  --app-font-size: 17px;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-deep: var(--background-deep);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-surface-strong: var(--surface-strong);
@@ -46,6 +49,10 @@
   --color-ring: var(--primary);
   --color-warning: var(--warning);
   --color-success: var(--success);
+  --text-xs: 0.875rem;
+  --text-xs--line-height: 1.4rem;
+  --text-sm: 1rem;
+  --text-sm--line-height: 1.6rem;
 }
 
 * {
@@ -62,14 +69,19 @@ body,
   overflow: hidden;
 }
 
+html {
+  font-size: var(--app-font-size);
+}
+
 body {
   background:
-    radial-gradient(circle at 78% -10%, rgba(99, 179, 255, 0.08), transparent 28%),
+    radial-gradient(circle at 78% -10%, rgba(120, 194, 255, 0.11), transparent 30%),
     var(--background);
   color: var(--foreground);
   font-family:
     Inter, "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI", "PingFang SC", sans-serif;
-  font-size: 14px;
+  font-size: 1rem;
+  line-height: 1.55;
   text-rendering: optimizeLegibility;
 }
 
@@ -102,14 +114,14 @@ button:disabled {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #303846;
+  background: #4a5a73;
   border: 2px solid transparent;
   border-radius: 999px;
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #465164;
+  background: #62748f;
   border: 2px solid transparent;
   background-clip: padding-box;
 }

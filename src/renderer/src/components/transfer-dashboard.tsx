@@ -69,7 +69,7 @@ export function TransferDashboard({
     <section className="overflow-hidden rounded-lg border border-border bg-surface">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-5 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-md border border-border bg-[#090c11] text-primary">
+          <div className="flex size-11 items-center justify-center rounded-md border border-border bg-background-deep text-primary">
             {mode === 'download' ? (
               <CloudDownload className="size-5" />
             ) : (
@@ -77,10 +77,10 @@ export function TransferDashboard({
             )}
           </div>
           <div>
-            <div className="text-base font-semibold">
+            <div className="text-lg font-bold">
               {mode === 'download' ? '备份到本地' : '上传到远端'}
             </div>
-            <div className="mt-1 text-xs text-muted">{statusText[status]}</div>
+            <div className="mt-1 text-sm text-muted">{statusText[status]}</div>
           </div>
         </div>
 
@@ -128,8 +128,8 @@ export function TransferDashboard({
       <div className="px-5 py-5">
         <div className="mb-3 flex items-end justify-between gap-5">
           <div className="min-w-0">
-            <div className="text-sm font-medium text-foreground/95">{currentTitle}</div>
-            <div className="mt-1.5 truncate text-xs text-muted">
+            <div className="text-base font-semibold text-foreground">{currentTitle}</div>
+            <div className="mt-1.5 truncate text-sm text-muted">
               {scanning
                 ? `已检查 ${scan?.directories ?? 0} 个目录、${scan?.files ?? 0} 个文件`
                 : transfer
@@ -138,13 +138,13 @@ export function TransferDashboard({
             </div>
           </div>
           <div className="shrink-0 text-right">
-            <div className="font-mono text-3xl font-semibold tabular-nums">
+            <div className="font-mono text-4xl font-bold tabular-nums">
               {scanning ? '检查中' : `${percent.toFixed(1)}%`}
             </div>
           </div>
         </div>
 
-        <Progress value={percent} indeterminate={scanning} tone={tone} className="h-2.5" />
+        <Progress value={percent} indeterminate={scanning} tone={tone} className="h-3" />
 
         <motion.div
           key={scanning ? 'scan' : transferring ? 'transfer' : status}
@@ -180,7 +180,7 @@ export function TransferDashboard({
         </motion.div>
 
         {(status === 'paused' || status === 'error' || status === 'cancelled') && (
-          <div className="mt-4 flex items-center gap-2 rounded-md border border-border bg-[#090c11] px-3 py-2.5 text-xs text-muted-strong">
+          <div className="mt-4 flex items-center gap-2 rounded-md border border-border bg-background-deep px-4 py-3 text-sm text-muted-strong">
             {status === 'paused' ? (
               <CirclePause className="size-4 text-warning" />
             ) : status === 'error' ? (
@@ -197,7 +197,7 @@ export function TransferDashboard({
         )}
 
         {(status === 'connecting' || status === 'preparing') && (
-          <div className="mt-4 flex items-center gap-2 text-xs text-muted">
+          <div className="mt-4 flex items-center gap-2 text-sm text-muted">
             <LoaderCircle className="size-3.5 animate-spin text-primary" />
             {statusText[status]}，请稍候...
           </div>
@@ -217,12 +217,12 @@ function SimpleStat({
   value: string
 }): React.JSX.Element {
   return (
-    <div className="rounded-md border border-border bg-[#090c11] px-3.5 py-3">
-      <div className="flex items-center gap-2 text-xs text-muted">
+    <div className="rounded-md border border-border bg-background-deep px-4 py-3.5">
+      <div className="flex items-center gap-2 text-sm text-muted">
         {icon && <span className="[&>svg]:size-4">{icon}</span>}
         {label}
       </div>
-      <div className="mt-1.5 font-mono text-base font-medium tabular-nums text-foreground">
+      <div className="mt-2 font-mono text-lg font-semibold tabular-nums text-foreground">
         {value}
       </div>
     </div>

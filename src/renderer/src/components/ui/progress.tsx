@@ -20,7 +20,7 @@ export function Progress({
   return (
     <div
       className={cn(
-        'relative h-1.5 w-full overflow-hidden rounded-full bg-[#1d232d]',
+        'relative h-2 w-full overflow-hidden rounded-full border border-border bg-background-deep',
         indeterminate && 'indeterminate-track',
         className
       )}

@@ -125,13 +125,13 @@ export function SettingsPanel(): React.JSX.Element {
           title="FTP 连接"
           description="连接信息只保存在当前电脑，密码使用系统安全存储加密。"
         />
-        <div className="grid gap-4 p-4 md:grid-cols-2">
+        <div className="grid gap-5 p-5 md:grid-cols-2">
           <Field label="主机地址">
             <Input
               value={config.host}
               onChange={(event) => patchConfig({ host: event.target.value })}
               placeholder="ftp.example.com"
-              className="h-11 text-sm"
+              className="h-12 text-sm"
             />
           </Field>
           <Field label="端口">
@@ -141,7 +141,7 @@ export function SettingsPanel(): React.JSX.Element {
               max={65535}
               value={config.port}
               onChange={(event) => patchConfig({ port: Number(event.target.value) || 21 })}
-              className="h-11 text-sm"
+              className="h-12 text-sm"
             />
           </Field>
           <Field label="用户名">
@@ -149,7 +149,7 @@ export function SettingsPanel(): React.JSX.Element {
               value={config.username}
               onChange={(event) => patchConfig({ username: event.target.value })}
               placeholder="ftp-user"
-              className="h-11 text-sm"
+              className="h-12 text-sm"
             />
           </Field>
           <Field label="密码">
@@ -159,7 +159,7 @@ export function SettingsPanel(): React.JSX.Element {
                 value={config.password}
                 onChange={(event) => patchConfig({ password: event.target.value })}
                 placeholder="不显示，也不会写入日志"
-                className="h-11 pr-10 text-sm"
+                className="h-12 pr-12 text-sm"
               />
               <Button
                 type="button"
@@ -177,7 +177,7 @@ export function SettingsPanel(): React.JSX.Element {
               value={config.remoteRoot}
               onChange={(event) => patchConfig({ remoteRoot: event.target.value })}
               placeholder="/"
-              className="h-11 font-mono text-sm"
+              className="h-12 font-mono text-sm"
             />
           </Field>
           <Field label="超时时间（秒）">
@@ -187,12 +187,12 @@ export function SettingsPanel(): React.JSX.Element {
               max={3600}
               value={config.timeout}
               onChange={(event) => patchConfig({ timeout: Number(event.target.value) || 60 })}
-              className="h-11 text-sm"
+              className="h-12 text-sm"
             />
           </Field>
         </div>
         <Separator />
-        <div className="flex flex-wrap items-center gap-5 p-4">
+        <div className="flex flex-wrap items-center gap-6 p-5">
           <ToggleLine
             label="保存密码"
             description="使用 Windows 安全存储"
@@ -220,7 +220,7 @@ export function SettingsPanel(): React.JSX.Element {
           title="同步策略"
           description="控制跳过规则和排除目录，拖动规则可调整顺序。"
         />
-        <div className="grid gap-4 p-4 md:grid-cols-2">
+        <div className="grid gap-5 p-5 md:grid-cols-2">
           <ToggleLine
             label="创建时间目录"
             description="备份时自动建立主机名与时间戳目录"
@@ -242,23 +242,23 @@ export function SettingsPanel(): React.JSX.Element {
               onChange={(event) => patchConfig({ retries: Number(event.target.value) || 0 })}
             />
           </Field>
-          <div className="rounded-md border border-border bg-[#0a0d12] p-3">
-            <div className="flex items-center gap-2 text-xs font-medium">
+          <div className="rounded-md border border-border bg-background-deep p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold">
               <KeyRound className="size-3.5 text-primary" />
               安全边界
             </div>
-            <p className="mt-1.5 text-[11px] leading-5 text-muted">
+            <p className="mt-2 text-sm leading-6 text-muted">
               软件不会删除远端文件，也不会在失败后留下伪装的完整文件。下载使用 .part
               临时文件，完成后才替换目标。
             </p>
           </div>
         </div>
         <Separator />
-        <div className="p-4">
+        <div className="p-5">
           <div className="mb-3 flex items-end justify-between gap-3">
             <div>
-              <div className="text-xs font-medium">排除路径</div>
-              <div className="mt-1 text-[10px] text-muted">
+              <div className="text-sm font-semibold">排除路径</div>
+              <div className="mt-1 text-xs text-muted">
                 支持精确目录、前缀路径以及 *、? 通配符。
               </div>
             </div>
@@ -331,13 +331,13 @@ function SettingsHeader({
   description: string
 }): React.JSX.Element {
   return (
-      <div className="flex items-center gap-3 border-b border-border px-5 py-4">
-      <div className="flex size-9 items-center justify-center rounded-md border border-border bg-[#0a0d12] text-primary [&>svg]:size-4">
+    <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+      <div className="flex size-10 items-center justify-center rounded-md border border-border bg-background-deep text-primary [&>svg]:size-4">
         {icon}
       </div>
       <div>
-        <div className="text-base font-semibold">{title}</div>
-        <div className="mt-0.5 text-xs text-muted">{description}</div>
+        <div className="text-lg font-bold">{title}</div>
+        <div className="mt-0.5 text-sm text-muted">{description}</div>
       </div>
     </div>
   )
@@ -396,21 +396,21 @@ function SortableRule({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        'flex h-9 items-center gap-2 rounded-md border border-border bg-[#0a0d12] px-2',
+        'flex h-10 items-center gap-2 rounded-md border border-border bg-background-deep px-2.5',
         isDragging && 'border-primary/40 opacity-80'
       )}
     >
       <Tooltip content="拖动调整顺序">
         <button
           type="button"
-          className="flex size-6 items-center justify-center text-muted hover:text-foreground"
+          className="flex size-7 items-center justify-center text-muted hover:text-foreground"
           {...attributes}
           {...listeners}
         >
           <GripVertical className="size-3.5" />
         </button>
       </Tooltip>
-      <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted-strong">{rule}</span>
+      <span className="min-w-0 flex-1 truncate font-mono text-sm text-muted-strong">{rule}</span>
       <Button variant="ghost" size="icon-sm" onClick={onRemove} title="删除规则">
         <Trash2 className="size-3.5" />
       </Button>

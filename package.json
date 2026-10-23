@@ -1,10 +1,10 @@
 {
   "name": "grace-php-host-backup",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "恩典 PHP 主机一键备份与迁移工具",
   "main": "./out/main/index.js",
   "author": {
-    "name": "Yufan Wang",
+    "name": "WangYufan",
     "email": "yufan14710@gmail.com"
   },
   "license": "MIT",
@@ -53,7 +53,7 @@
   "build": {
     "appId": "site.ainav.grace-backup",
     "productName": "恩典PHP主机一键备份",
-    "copyright": "Copyright © 2026 Yufan Wang",
+    "copyright": "Copyright © 2026 WangYufan",
     "asar": true,
     "directories": {
       "output": "release",

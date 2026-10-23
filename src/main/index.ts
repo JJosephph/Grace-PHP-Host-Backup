@@ -86,6 +86,11 @@ function registerIpc(): void {
     if (!path || !existsSync(path)) throw new Error('文件或目录不存在。')
     shell.showItemInFolder(path)
   })
+
+  ipcMain.handle('grace:open-external', async (_event, url: string) => {
+    if (!/^https:\/\//i.test(url)) throw new Error('只允许打开 HTTPS 链接。')
+    await shell.openExternal(url)
+  })
 }
 
 function createWindow(): void {

@@ -2,12 +2,17 @@ import {
   CloudDownload,
   CloudUpload,
   FolderTree,
+  Github,
   HardDrive,
+  Heart,
   LoaderCircle,
+  MessageCircle,
   RadioTower,
   Server,
   Settings2,
   ShieldCheck,
+  Star,
+  UserRound,
   Wifi,
   WifiOff
 } from 'lucide-react'
@@ -211,6 +216,19 @@ export function App(): React.JSX.Element {
     }
   }
 
+  const openProject = async (): Promise<void> => {
+    try {
+      await window.grace.openExternal('https://github.com/JJosephph/Grace-PHP-Host-Backup')
+    } catch (error) {
+      appendLog({
+        id: `${Date.now()}-open-project-error`,
+        time: new Date().toISOString(),
+        level: 'error',
+        message: error instanceof Error ? error.message : String(error)
+      })
+    }
+  }
+
   if (!ready) {
     return (
       <div className="flex h-full items-center justify-center bg-background">
@@ -225,15 +243,15 @@ export function App(): React.JSX.Element {
   return (
     <TooltipProvider>
       <div className="flex h-full w-full overflow-hidden bg-background">
-        <aside className="flex w-[220px] shrink-0 flex-col border-r border-border bg-[#090c11]">
-          <div className="flex h-[72px] items-center gap-3 border-b border-border px-4">
-            <div className="relative flex size-10 items-center justify-center rounded-lg border border-primary/25 bg-primary/8 text-primary">
+        <aside className="flex w-[252px] shrink-0 flex-col overflow-y-auto border-r border-border bg-background-deep">
+          <div className="flex h-20 items-center gap-3 border-b border-border px-5">
+            <div className="relative flex size-11 items-center justify-center rounded-lg border border-primary/35 bg-primary/12 text-primary">
               <ShieldCheck className="size-5" />
-              <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full border-2 border-[#090c11] bg-primary" />
+              <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full border-2 border-background-deep bg-primary" />
             </div>
             <div className="min-w-0">
-              <div className="truncate text-sm font-semibold tracking-normal">恩典主机备份</div>
-              <div className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">
+              <div className="truncate text-base font-bold tracking-normal">恩典主机备份</div>
+              <div className="mt-0.5 font-mono text-xs uppercase tracking-[0.1em] text-muted">
                 Grace Backup
               </div>
             </div>
@@ -248,7 +266,7 @@ export function App(): React.JSX.Element {
                 className={cn(
                   'group relative flex w-full items-center gap-3 rounded-md border px-3 py-2.5 text-left transition',
                   view === item.id
-                    ? 'border-primary/20 bg-primary/8 text-foreground'
+                    ? 'border-primary/35 bg-primary/12 text-foreground'
                     : 'border-transparent text-muted-strong hover:border-border hover:bg-surface-hover hover:text-foreground'
                 )}
               >
@@ -267,56 +285,90 @@ export function App(): React.JSX.Element {
             ))}
           </nav>
 
-          <div className="m-3 rounded-lg border border-border bg-surface p-3.5">
-            <div className="flex items-center gap-2">
+          <div className="space-y-3 p-3">
+            <div className="rounded-lg border border-border bg-surface p-4">
+              <div className="flex items-center gap-3">
               <span
                 className={cn(
-                  'flex size-8 items-center justify-center rounded-md border',
+                  'flex size-9 items-center justify-center rounded-md border',
                   connection || config.host
-                    ? 'border-primary/20 bg-primary/8 text-primary'
-                    : 'border-border bg-[#0a0d12] text-muted'
+                    ? 'border-primary/35 bg-primary/12 text-primary'
+                    : 'border-border bg-background-deep text-muted'
                 )}
               >
-                {connection || config.host ? <Wifi className="size-3.5" /> : <WifiOff className="size-3.5" />}
+                {connection || config.host ? <Wifi className="size-4" /> : <WifiOff className="size-4" />}
               </span>
               <div className="min-w-0">
-                <div className="truncate text-xs font-medium">
+                <div className="truncate text-sm font-semibold">
                   {config.host || '尚未配置 FTP'}
                 </div>
-                <div className="mt-0.5 truncate text-[10px] text-muted">
+                <div className="mt-0.5 truncate text-xs text-muted">
                   {config.host ? `${config.username || '未填写账号'} · ${config.remoteRoot}` : '请先完成连接设置'}
                 </div>
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between border-t border-border pt-2.5">
-              <span className="font-mono text-[10px] text-muted">v0.2.1</span>
-              <span className={cn('text-[10px]', dirty ? 'text-warning' : 'text-muted')}>
-                {dirty ? '有未保存修改' : '设置已同步'}
-              </span>
+              <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+                <span className="font-mono text-xs text-muted">v0.2.2</span>
+                <span className={cn('text-xs', dirty ? 'text-warning' : 'text-muted')}>
+                  {dirty ? '有未保存修改' : '设置已同步'}
+                </span>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border bg-surface p-4">
+              <div className="flex items-start gap-2.5">
+                <Heart className="mt-0.5 size-4 shrink-0 text-danger" />
+                <div>
+                  <div className="text-sm font-bold">开源免费 · 求个 Star</div>
+                  <p className="mt-1 text-xs leading-5 text-muted">
+                    如果它帮你节省了时间，欢迎到 GitHub 点个 Star。
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="mt-3 w-full"
+                onClick={() => void openProject()}
+              >
+                <Github className="size-4" />
+                <Star className="size-3.5 text-warning" />
+                GitHub 点个 Star
+              </Button>
+              <div className="mt-3 space-y-1.5 border-t border-border pt-3 text-xs text-muted-strong">
+                <div className="flex items-center gap-2">
+                  <UserRound className="size-3.5 text-primary" />
+                  开发者：WangYufan
+                </div>
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="size-3.5 text-accent" />
+                  QQ：1471056247
+                </div>
+              </div>
             </div>
           </div>
         </aside>
 
         <main className="flex min-w-0 flex-1 flex-col">
-          <header className="flex h-[72px] shrink-0 items-center gap-4 border-b border-border bg-[#090c11]/95 px-6 backdrop-blur">
+          <header className="flex h-20 shrink-0 items-center gap-4 border-b border-border bg-background-deep/95 px-6 backdrop-blur">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-semibold tracking-normal">{viewMeta[view].title}</h1>
+                <h1 className="text-xl font-bold tracking-normal">{viewMeta[view].title}</h1>
                 <Badge variant={busy ? 'default' : 'neutral'}>
                   {busy ? <LoaderCircle className="size-3 animate-spin" /> : <RadioTower className="size-3" />}
                   {busy ? '任务运行中' : '就绪'}
                 </Badge>
               </div>
-              <p className="mt-1 truncate text-xs text-muted">{viewMeta[view].description}</p>
+              <p className="mt-1 truncate text-sm text-muted">{viewMeta[view].description}</p>
             </div>
 
             <div className="flex items-center gap-2">
               <Tooltip content={connection ? `最近连接 ${connection.host}` : '尚未测试连接'}>
                 <div
                   className={cn(
-                    'flex h-8 items-center gap-2 rounded-md border px-2.5 text-[11px]',
+                    'flex h-9 items-center gap-2 rounded-md border px-3 text-sm',
                     connection
-                      ? 'border-primary/20 bg-primary/8 text-primary'
+                      ? 'border-primary/35 bg-primary/12 text-primary'
                       : 'border-border bg-surface text-muted'
                   )}
                 >
@@ -335,7 +387,7 @@ export function App(): React.JSX.Element {
             </div>
           </header>
 
-          <div className="min-h-0 flex-1 overflow-hidden p-5">
+          <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-5">
             <AnimatePresence mode="wait">
               <motion.div
                 key={view}
@@ -373,12 +425,12 @@ export function App(): React.JSX.Element {
                   <div className="flex h-full min-h-0 flex-col gap-3">
                     <div className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex size-8 items-center justify-center rounded-md border border-border bg-[#0a0d12] text-primary">
+                        <div className="flex size-9 items-center justify-center rounded-md border border-border bg-background-deep text-primary">
                           <Server className="size-4" />
                         </div>
                         <div>
-                          <div className="text-xs font-medium">远端文件浏览器</div>
-                          <div className="mt-0.5 text-[10px] text-muted">
+                          <div className="text-sm font-semibold">远端文件浏览器</div>
+                          <div className="mt-0.5 text-xs text-muted">
                             点击目录进入，所有内容均来自当前 FTP 账号。
                           </div>
                         </div>

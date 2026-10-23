@@ -8,6 +8,8 @@
 
 ## v0.2.0 变化
 
+- v0.2.2 提高深色界面对比度和默认字号，改善笔记本缩放后的可读性。
+- 增加开源免费、GitHub Star 和开发者联系方式。
 - 桌面界面使用 Electron、React、TypeScript 和 Vite 重写。
 - 使用 shadcn/ui Nova 风格、Lucide 图标和 Motion 动效统一设计语言。
 - 扫描阶段实时显示目录数、文件数、当前路径和耗时。
@@ -33,7 +35,7 @@
 
 前往 Releases 下载：
 
-`Grace-PHP-Host-Backup-0.2.1-portable.exe`
+`Grace-PHP-Host-Backup-0.2.2-portable.exe`
 
 这是便携版 Windows 程序，不需要安装。第一次运行后填写 FTP 信息即可。
 
@@ -87,7 +89,7 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 构建结果位于：
 
 ```text
-release\Grace-PHP-Host-Backup-0.2.1-portable.exe
+release\Grace-PHP-Host-Backup-0.2.2-portable.exe
 release\恩典PHP主机一键备份.exe
 ```
 
@@ -95,13 +97,21 @@ release\恩典PHP主机一键备份.exe
 
 ## 版本
 
-当前版本：`v0.2.1`
+当前版本：`v0.2.2`
 
 ## 作者
 
-Yufan Wang (JJosephph)
+WangYufan (JJosephph)
 
 邮箱：yufan14710@gmail.com
+
+QQ：1471056247
+
+## 开源支持
+
+本项目开源免费。如果它帮你节省了时间，欢迎到 GitHub 点个 Star：
+
+<https://github.com/JJosephph/Grace-PHP-Host-Backup>
 
 ## License
 

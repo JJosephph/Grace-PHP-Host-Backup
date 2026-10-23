@@ -121,13 +121,13 @@ export function BrowserPanel({ kind, rootPath }: BrowserPanelProps): React.JSX.E
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#0a0d12]">
-      <div className="flex h-11 shrink-0 items-center gap-2 border-b border-border px-3">
-        <div className="flex size-7 items-center justify-center rounded-md border border-border bg-surface-strong text-muted-strong">
-          {kind === 'remote' ? <Server className="size-3.5" /> : <HardDrive className="size-3.5" />}
+    <div className="flex h-full min-h-0 flex-col bg-background-deep">
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3.5">
+        <div className="flex size-8 items-center justify-center rounded-md border border-border bg-surface-strong text-muted-strong">
+          {kind === 'remote' ? <Server className="size-4" /> : <HardDrive className="size-4" />}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium">
+          <div className="truncate text-sm font-semibold">
             {kind === 'remote' ? '远端文件' : '本地目录'}
           </div>
           <div className="truncate text-xs text-muted">
@@ -161,14 +161,14 @@ export function BrowserPanel({ kind, rootPath }: BrowserPanelProps): React.JSX.E
         </Button>
       </div>
 
-      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-border bg-[#0c1015] px-3">
-        <FolderOpen className="size-3 text-muted" />
+      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border bg-surface px-3.5">
+        <FolderOpen className="size-4 text-muted" />
         <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted-strong">
           {path || '--'}
         </span>
       </div>
 
-      <div className="grid h-8 shrink-0 grid-cols-[minmax(0,1fr)_88px_126px] items-center border-b border-border px-3 text-xs uppercase tracking-[0.04em] text-muted">
+      <div className="grid h-9 shrink-0 grid-cols-[minmax(0,1fr)_100px_140px] items-center border-b border-border px-3.5 text-xs uppercase tracking-[0.04em] text-muted">
         <span>名称</span>
         <span className="text-right">大小</span>
         <span className="text-right">修改时间</span>
@@ -194,7 +194,7 @@ export function BrowserPanel({ kind, rootPath }: BrowserPanelProps): React.JSX.E
         )}
 
         {error && (
-          <div className="m-3 rounded-md border border-[#5b222b] bg-[#241116] p-3 text-xs leading-5 text-[#ff9aa3]">
+          <div className="m-3 rounded-md border border-[#7f3a45] bg-[#35171d] p-3.5 text-sm leading-6 text-[#ffb0b8]">
             {error}
           </div>
         )}
@@ -209,24 +209,24 @@ export function BrowserPanel({ kind, rootPath }: BrowserPanelProps): React.JSX.E
               transition={{ delay: Math.min(index * 0.004, 0.08) }}
               onClick={() => handleEntry(entry)}
               className={cn(
-                'grid h-9 w-full grid-cols-[minmax(0,1fr)_88px_126px] items-center border-b border-[#151a22] px-3 text-left transition hover:bg-surface-hover',
+                'grid h-10 w-full grid-cols-[minmax(0,1fr)_100px_140px] items-center border-b border-border/70 px-3.5 text-left transition hover:bg-surface-hover',
                 entry.isDirectory && 'cursor-pointer'
               )}
             >
               <span className="flex min-w-0 items-center gap-2">
                 {entry.isDirectory ? (
-                  <Folder className="size-3.5 shrink-0 fill-primary/10 text-primary" />
+                    <Folder className="size-4 shrink-0 fill-primary/10 text-primary" />
                 ) : (
-                  <File className="size-3.5 shrink-0 text-muted" />
+                  <File className="size-4 shrink-0 text-muted" />
                 )}
-                <span className="truncate text-sm text-foreground/92">{entry.name}</span>
+                <span className="truncate text-sm text-foreground">{entry.name}</span>
                 {entry.isSymbolicLink && <Link2 className="size-3 shrink-0 text-warning" />}
               </span>
               <span className="text-right font-mono text-xs tabular-nums text-muted">
                 {entry.isDirectory ? '目录' : formatBytes(entry.size)}
               </span>
               <span className="flex items-center justify-end gap-1 text-right font-mono text-xs text-muted">
-                <Clock3 className="size-2.5" />
+                <Clock3 className="size-3" />
                 {formatDate(entry.modifiedAt)}
               </span>
             </motion.button>
@@ -249,7 +249,7 @@ function EmptyState({
       <div className="flex size-11 items-center justify-center rounded-lg border border-border bg-surface">
         {icon}
       </div>
-      <span className="text-xs">{title}</span>
+      <span className="text-sm">{title}</span>
     </div>
   )
 }

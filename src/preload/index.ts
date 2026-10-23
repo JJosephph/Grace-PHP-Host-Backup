@@ -15,6 +15,7 @@ const api: AppApi = {
   resumeTransfer: () => ipcRenderer.invoke('grace:transfer:resume'),
   openPath: (path) => ipcRenderer.invoke('grace:open-path', path),
   revealPath: (path) => ipcRenderer.invoke('grace:reveal-path', path),
+  openExternal: (url) => ipcRenderer.invoke('grace:open-external', url),
   onLog: (callback) => {
     const listener = (_event: Electron.IpcRendererEvent, payload: Parameters<typeof callback>[0]): void =>
       callback(payload)

@@ -37,15 +37,15 @@ export function LogConsole(): React.JSX.Element {
   return (
     <section
       className={cn(
-        'flex min-h-0 shrink-0 flex-col border-t border-border bg-[#080a0e]',
-        collapsed ? 'h-11' : 'h-52'
+        'flex min-h-0 shrink-0 flex-col border-t border-border bg-background-deep',
+        collapsed ? 'h-12' : 'h-60'
       )}
     >
-      <div className="flex h-11 shrink-0 items-center gap-2 border-b border-border px-4">
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
         <div className="flex items-center gap-2">
           <span className="size-1.5 rounded-full bg-primary shadow-[0_0_10px_rgba(105,230,196,0.75)]" />
-          <span className="text-xs font-medium">运行日志</span>
-          <span className="rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted">
+          <span className="text-sm font-semibold">运行日志</span>
+          <span className="rounded border border-border px-2 py-0.5 font-mono text-xs text-muted">
             {logs.length}
           </span>
         </div>
@@ -85,7 +85,7 @@ export function LogConsole(): React.JSX.Element {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-0 flex-1 overflow-auto px-4 py-2.5 font-mono text-[11px] leading-5"
+            className="min-h-0 flex-1 overflow-auto px-4 py-3 font-mono text-xs leading-6"
           >
             {logs.length === 0 ? (
               <div className="flex h-full items-center justify-center text-muted">
@@ -97,7 +97,7 @@ export function LogConsole(): React.JSX.Element {
                   key={entry.id}
                   className="grid grid-cols-[72px_16px_minmax(0,1fr)] items-start gap-1.5"
                 >
-                  <span className="tabular-nums text-[#657083]">{formatClock(entry.time)}</span>
+                  <span className="tabular-nums text-[#a8b5c6]">{formatClock(entry.time)}</span>
                   <LogIcon level={entry.level} />
                   <span
                     className={cn(
@@ -108,7 +108,7 @@ export function LogConsole(): React.JSX.Element {
                           ? 'text-warning'
                           : entry.level === 'success'
                             ? 'text-primary'
-                            : 'text-[#b8c1ce]'
+                            : 'text-[#d5deea]'
                     )}
                   >
                     {entry.message}
