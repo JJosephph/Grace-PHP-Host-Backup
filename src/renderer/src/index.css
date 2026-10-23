@@ -1,0 +1,146 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  color-scheme: dark;
+  --background: #07090d;
+  --foreground: #f4f7fb;
+  --surface: #0d1016;
+  --surface-strong: #11151d;
+  --surface-hover: #171c25;
+  --muted: #8d98aa;
+  --muted-strong: #b8c1ce;
+  --border: #252c38;
+  --border-strong: #354052;
+  --primary: #69e6c4;
+  --primary-foreground: #06120f;
+  --accent: #63b3ff;
+  --danger: #ff6b78;
+  --warning: #ffc857;
+  --success: #69e6c4;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+  --color-surface-hover: var(--surface-hover);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--surface-strong);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--surface-strong);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: var(--surface-hover);
+  --color-muted-foreground: var(--muted);
+  --color-muted-strong: var(--muted-strong);
+  --color-accent: var(--accent);
+  --color-destructive: var(--danger);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--border);
+  --color-ring: var(--primary);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+}
+
+* {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background:
+    radial-gradient(circle at 78% -10%, rgba(99, 179, 255, 0.08), transparent 28%),
+    var(--background);
+  color: var(--foreground);
+  font-family:
+    Inter, "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+  font-size: 14px;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+::selection {
+  background: rgba(105, 230, 196, 0.26);
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #303846;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #465164;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+.indeterminate-track {
+  position: relative;
+  overflow: hidden;
+}
+
+.indeterminate-track::after {
+  position: absolute;
+  inset: 0;
+  width: 38%;
+  content: "";
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  animation: indeterminate 1.25s ease-in-out infinite;
+}
+
+@keyframes indeterminate {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(310%);
+  }
+}

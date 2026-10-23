@@ -4,6 +4,10 @@ __pycache__/
 .venv/
 build/
 dist/
+out/
+release/
+node_modules/
+*.tsbuildinfo
 logs/
 grace-php-host-backup.json
 *.part
