@@ -15,7 +15,7 @@ def main() -> int:
         raise FileNotFoundError(source)
     target = dist / "恩典PHP主机一键备份.exe"
     shutil.copy2(source, target)
-    print(target)
+    print("Localized executable copy created.")
     return 0
 
 

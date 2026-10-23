@@ -6,9 +6,35 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = $PSScriptRoot
 $distDir = Join-Path $projectRoot 'dist'
 $buildDir = Join-Path $projectRoot 'build'
+$pythonCommand = $null
+$pythonArgs = @()
+
+$pythonCandidates = @(
+    @{ Command = 'python'; Arguments = @() },
+    @{ Command = 'py'; Arguments = @('-3') }
+)
+
+foreach ($candidate in $pythonCandidates) {
+    if (-not (Get-Command $candidate.Command -ErrorAction SilentlyContinue)) {
+        continue
+    }
+    & $candidate.Command @($candidate.Arguments) -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)" 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        $pythonCommand = $candidate.Command
+        $pythonArgs = @($candidate.Arguments)
+        break
+    }
+}
+
+if (-not $pythonCommand) {
+    throw 'Python 3 was not found. Install Python 3.12 or later and try again.'
+}
 
 if (-not $SkipInstall) {
-    py -3 -m pip install --upgrade -r (Join-Path $projectRoot 'requirements.txt')
+    & $pythonCommand @pythonArgs -m pip install --upgrade -r (Join-Path $projectRoot 'requirements.txt')
+    if ($LASTEXITCODE -ne 0) {
+        throw "Installing Python dependencies failed with exit code $LASTEXITCODE."
+    }
 }
 
 if (Test-Path -LiteralPath $distDir) {
@@ -18,9 +44,12 @@ if (Test-Path -LiteralPath $buildDir) {
     Remove-Item -LiteralPath $buildDir -Recurse -Force
 }
 
-py -3 (Join-Path $projectRoot 'tools\build_assets.py')
+& $pythonCommand @pythonArgs (Join-Path $projectRoot 'tools\build_assets.py')
+if ($LASTEXITCODE -ne 0) {
+    throw "Generating application assets failed with exit code $LASTEXITCODE."
+}
 
-py -3 -m PyInstaller `
+& $pythonCommand @pythonArgs -m PyInstaller `
     --noconfirm `
     --clean `
     --onefile `
@@ -31,8 +60,14 @@ py -3 -m PyInstaller `
     --workpath $buildDir `
     --specpath $buildDir `
     (Join-Path $projectRoot 'app.py')
+if ($LASTEXITCODE -ne 0) {
+    throw "PyInstaller failed with exit code $LASTEXITCODE."
+}
 
-py -3 (Join-Path $projectRoot 'tools\finalize_build.py') $distDir
+& $pythonCommand @pythonArgs (Join-Path $projectRoot 'tools\finalize_build.py') $distDir
+if ($LASTEXITCODE -ne 0) {
+    throw "Finalizing the build failed with exit code $LASTEXITCODE."
+}
 
 Copy-Item -LiteralPath (Join-Path $projectRoot 'config.example.json') -Destination $distDir
 Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $distDir
