@@ -8,7 +8,7 @@
 
 ## v0.2.0 变化
 
-- v0.2.2 提高深色界面对比度和默认字号，改善笔记本缩放后的可读性。
+- v0.2.3 修复深色界面辅助文字颜色映射错误，并扩大远端文件列表高度。
 - 增加开源免费、GitHub Star 和开发者联系方式。
 - 桌面界面使用 Electron、React、TypeScript 和 Vite 重写。
 - 使用 shadcn/ui Nova 风格、Lucide 图标和 Motion 动效统一设计语言。
@@ -35,7 +35,7 @@
 
 前往 Releases 下载：
 
-`Grace-PHP-Host-Backup-0.2.2-portable.exe`
+`Grace-PHP-Host-Backup-0.2.3-portable.exe`
 
 这是便携版 Windows 程序，不需要安装。第一次运行后填写 FTP 信息即可。
 
@@ -89,7 +89,7 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 构建结果位于：
 
 ```text
-release\Grace-PHP-Host-Backup-0.2.2-portable.exe
+release\Grace-PHP-Host-Backup-0.2.3-portable.exe
 release\恩典PHP主机一键备份.exe
 ```
 
@@ -97,7 +97,7 @@ release\恩典PHP主机一键备份.exe
 
 ## 版本
 
-当前版本：`v0.2.2`
+当前版本：`v0.2.3`
 
 ## 作者
 

@@ -3,12 +3,10 @@ import {
   CloudUpload,
   FolderTree,
   Github,
-  HardDrive,
   Heart,
   LoaderCircle,
   MessageCircle,
   RadioTower,
-  Server,
   Settings2,
   ShieldCheck,
   Star,
@@ -308,7 +306,7 @@ export function App(): React.JSX.Element {
               </div>
             </div>
               <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
-                <span className="font-mono text-xs text-muted">v0.2.2</span>
+                <span className="font-mono text-xs text-muted">v0.2.3</span>
                 <span className={cn('text-xs', dirty ? 'text-warning' : 'text-muted')}>
                   {dirty ? '有未保存修改' : '设置已同步'}
                 </span>
@@ -375,7 +373,7 @@ export function App(): React.JSX.Element {
                   <span
                     className={cn(
                       'size-1.5 rounded-full',
-                      connection ? 'bg-primary' : 'bg-muted'
+                      connection ? 'bg-primary' : 'bg-border-strong'
                     )}
                   />
                   {connection ? '连接正常' : '等待连接'}
@@ -422,27 +420,8 @@ export function App(): React.JSX.Element {
                   />
                 )}
                 {view === 'remote' && (
-                  <div className="flex h-full min-h-0 flex-col gap-3">
-                    <div className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex size-9 items-center justify-center rounded-md border border-border bg-background-deep text-primary">
-                          <Server className="size-4" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold">远端文件浏览器</div>
-                          <div className="mt-0.5 text-xs text-muted">
-                            点击目录进入，所有内容均来自当前 FTP 账号。
-                          </div>
-                        </div>
-                      </div>
-                      <Button variant="secondary" size="sm" onClick={() => setView('settings')}>
-                        <HardDrive className="size-3.5" />
-                        管理连接
-                      </Button>
-                    </div>
-                    <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-surface">
-                      <BrowserPanel kind="remote" />
-                    </div>
+                  <div className="h-full min-h-0 overflow-hidden rounded-lg border border-border bg-surface">
+                    <BrowserPanel kind="remote" />
                   </div>
                 )}
                 {view === 'settings' && <SettingsPanel />}

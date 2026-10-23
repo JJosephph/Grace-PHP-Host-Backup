@@ -1,6 +1,6 @@
 {
   "name": "grace-php-host-backup",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "恩典 PHP 主机一键备份与迁移工具",
   "main": "./out/main/index.js",
   "author": {

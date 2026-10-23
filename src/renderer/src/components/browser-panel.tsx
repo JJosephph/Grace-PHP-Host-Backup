@@ -122,7 +122,7 @@ export function BrowserPanel({ kind, rootPath }: BrowserPanelProps): React.JSX.E
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background-deep">
-      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3.5">
+      <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3.5">
         <div className="flex size-8 items-center justify-center rounded-md border border-border bg-surface-strong text-muted-strong">
           {kind === 'remote' ? <Server className="size-4" /> : <HardDrive className="size-4" />}
         </div>
@@ -130,8 +130,13 @@ export function BrowserPanel({ kind, rootPath }: BrowserPanelProps): React.JSX.E
           <div className="truncate text-sm font-semibold">
             {kind === 'remote' ? '远端文件' : '本地目录'}
           </div>
-          <div className="truncate text-xs text-muted">
-            {kind === 'remote' ? `${config.host || '未连接'}:${config.port}` : path || '尚未选择'}
+          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted">
+            <FolderOpen className="size-3.5 shrink-0" />
+            <span className="truncate font-mono">
+              {kind === 'remote'
+                ? `${config.host || '未连接'}:${config.port}${path || '/'}`
+                : path || '尚未选择目录'}
+            </span>
           </div>
         </div>
         <span className="text-xs tabular-nums text-muted">
@@ -161,20 +166,13 @@ export function BrowserPanel({ kind, rootPath }: BrowserPanelProps): React.JSX.E
         </Button>
       </div>
 
-      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border bg-surface px-3.5">
-        <FolderOpen className="size-4 text-muted" />
-        <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted-strong">
-          {path || '--'}
-        </span>
-      </div>
-
-      <div className="grid h-9 shrink-0 grid-cols-[minmax(0,1fr)_100px_140px] items-center border-b border-border px-3.5 text-xs uppercase tracking-[0.04em] text-muted">
+      <div className="grid h-8 shrink-0 grid-cols-[minmax(0,1fr)_100px_140px] items-center border-b border-border bg-surface px-3.5 text-xs uppercase tracking-[0.04em] text-muted">
         <span>名称</span>
         <span className="text-right">大小</span>
         <span className="text-right">修改时间</span>
       </div>
 
-      <div className="relative min-h-0 flex-1 overflow-auto">
+      <div className="relative min-h-0 flex-1 overflow-auto overscroll-contain">
         {loading && entries.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center text-muted">
             <LoaderCircle className="mr-2 size-4 animate-spin" />
