@@ -1,0 +1,22 @@
+{
+  "host": "ftp.example.com",
+  "port": 21,
+  "username": "ftp-user",
+  "password_encrypted": "",
+  "remember_password": false,
+  "remote_root": "/",
+  "passive": true,
+  "tls": false,
+  "local_root": "D:\\PHP-Host-Backups",
+  "timestamp_folder": true,
+  "compare_mtime": false,
+  "retries": 3,
+  "timeout": 60,
+  "exclude_patterns": [
+    ".git",
+    "var/cache",
+    "var/tmp",
+    "sql_backup/static_backup_work"
+  ]
+}
+

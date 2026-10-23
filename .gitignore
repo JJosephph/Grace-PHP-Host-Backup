@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.spec
+.venv/
+build/
+dist/
+logs/
+grace-php-host-backup.json
+*.part
+*.tmp
+
