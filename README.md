@@ -6,8 +6,9 @@
 
 它不依赖 SSH、不压缩整站，也不需要服务器安装额外程序。配置 FTP 后即可直接下载或上传整站目录，适合 Typecho、WordPress、ThinkPHP 等常见 PHP 项目。
 
-## v0.2.4 变化
+## v0.2.5 变化
 
+- v0.2.5 自动整理旧版散落在备份根目录的内容，并把历史比对进度细化到文件级；备份页移除了重复的文件检查入口，工作流统一显示连接、扫描、比对、增量传输和完成状态。
 - v0.2.4 增加按日期归档和日期增量复用：同日复用覆盖，异日自动新建；优先从上次备份复制未变化文件，只下载新增或修改内容，并加强上传大小与可用时的内容哈希校验。
 - v0.2.3 修复深色界面辅助文字颜色映射错误，并扩大远端文件列表高度。
 - 增加开源免费、GitHub Star 和开发者联系方式。
@@ -38,7 +39,7 @@
 
 前往 Releases 下载：
 
-`Grace-PHP-Host-Backup-0.2.4-portable.exe`
+`Grace-PHP-Host-Backup-0.2.5-portable.exe`
 
 这是便携版 Windows 程序，不需要安装。第一次运行后填写 FTP 信息即可。
 
@@ -92,7 +93,7 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 构建结果位于：
 
 ```text
-release\Grace-PHP-Host-Backup-0.2.4-portable.exe
+release\Grace-PHP-Host-Backup-0.2.5-portable.exe
 release\恩典PHP主机一键备份.exe
 ```
 
@@ -100,7 +101,7 @@ release\恩典PHP主机一键备份.exe
 
 ## 版本
 
-当前版本：`v0.2.4`
+当前版本：`v0.2.5`
 
 ## 作者
 

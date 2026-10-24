@@ -28,6 +28,7 @@ type LogHandler = (level: LogLevel, message: string) => void
 type StatusHandler = (status: OperationStatus) => void
 type ScanHandler = (progress: ScanProgress) => void
 type TransferHandler = (progress: TransferProgress) => void
+type CompareHandler = (progress: Omit<ScanProgress, 'mode'>) => void
 
 interface TransferTask {
   relative: string
@@ -236,6 +237,47 @@ async function findPreviousBackupRoot(
   return previousFolders[0] ? join(baseRoot, previousFolders[0]) : null
 }
 
+function isDateFolder(name: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(name)
+}
+
+interface LegacyMigrationResult {
+  targetRoot: string
+  moved: number
+  skipped: number
+}
+
+async function migrateLegacyBackupEntries(
+  baseRoot: string
+): Promise<LegacyMigrationResult | null> {
+  const entries = await readdir(baseRoot, { withFileTypes: true }).catch(() => [])
+  const dateFolders = entries
+    .filter((entry) => entry.isDirectory() && isDateFolder(entry.name))
+    .map((entry) => entry.name)
+    .sort((left, right) => right.localeCompare(left))
+  if (dateFolders.length === 0) return null
+
+  const legacyEntries = entries.filter((entry) => !isDateFolder(entry.name))
+  if (legacyEntries.length === 0) return null
+
+  // 旧版曾把整站直接写在根目录。这里只移动，不覆盖、不删除，统一归入最近的日期目录。
+  const targetRoot = join(baseRoot, dateFolders[0])
+  await mkdir(targetRoot, { recursive: true })
+  let moved = 0
+  let skipped = 0
+  for (const entry of legacyEntries) {
+    const source = join(baseRoot, entry.name)
+    const destination = join(targetRoot, entry.name)
+    if (await stat(destination).catch(() => null)) {
+      skipped += 1
+      continue
+    }
+    await rename(source, destination)
+    moved += 1
+  }
+  return { targetRoot, moved, skipped }
+}
+
 function digestAlgorithm(command: string): DigestAlgorithm {
   const normalized = command.toUpperCase()
   if (normalized.includes('256')) return 'sha256'
@@ -429,6 +471,19 @@ export class FtpService {
 
     try {
       if (mode === 'download' && config.timestampFolder) {
+        const migration = await migrateLegacyBackupEntries(localRoot)
+        if (migration) {
+          this.log(
+            'info',
+            `检测到旧版散落备份，已将 ${migration.moved} 项整理到 ${basename(migration.targetRoot)}。`
+          )
+          if (migration.skipped > 0) {
+            this.log(
+              'warning',
+              `${migration.skipped} 项因目标位置已存在而保留在原处，未覆盖任何文件。`
+            )
+          }
+        }
         await mkdir(transferLocalRoot, { recursive: true })
         previousBackupRoot = await findPreviousBackupRoot(localRoot, backupDateFolder ?? '')
         this.log(
@@ -466,15 +521,24 @@ export class FtpService {
       )
 
       this.onStatus('preparing')
+      const reportCompare: CompareHandler = (progress) => this.onScan({ ...progress, mode })
       const tasks =
         mode === 'download'
           ? await this.buildDownloadTasks(
               config,
               transferLocalRoot,
               remoteEntries.entries,
-              previousBackupRoot
+              previousBackupRoot,
+              this.controller,
+              reportCompare
             )
-          : await this.buildUploadTasks(config, localEntries, remoteEntries.entries)
+          : await this.buildUploadTasks(
+              config,
+              localEntries,
+              remoteEntries.entries,
+              this.controller,
+              reportCompare
+            )
 
       const totalBytes = tasks.reduce((sum, task) => sum + task.size, 0)
       const copyTasks = tasks.filter((task) => task.copyFrom).length
@@ -856,13 +920,35 @@ export class FtpService {
     config: AppConfig,
     localRoot: string,
     remoteEntries: Map<string, RemoteEntry>,
-    previousRoot: string | null
+    previousRoot: string | null,
+    controller: TransferController,
+    progress: CompareHandler
   ): Promise<TransferTask[]> {
     const tasks: TransferTask[] = []
-    for (const [relativePath, entry] of [...remoteEntries.entries()].sort(([a], [b]) =>
-      a.localeCompare(b)
-    )) {
-      if (entry.isDirectory) continue
+    const files = [...remoteEntries.entries()]
+      .filter(([, entry]) => !entry.isDirectory)
+      .sort(([left], [right]) => left.localeCompare(right))
+    const startedAt = Date.now()
+    let compared = 0
+    let lastEmitAt = 0
+
+    for (const [relativePath, entry] of files) {
+      controller.throwIfCancelled()
+      await controller.waitIfPaused()
+      compared += 1
+      const now = Date.now()
+      if (now - lastEmitAt >= 80 || compared === files.length) {
+        progress({
+          directories: 0,
+          files: compared,
+          totalFiles: files.length,
+          bytes: 0,
+          currentPath: relativePath,
+          elapsedMs: now - startedAt,
+          phase: 'compare'
+        })
+        lastEmitAt = now
+      }
       const localPath = join(localRoot, ...relativePath.split('/'))
       const modifiedAt = entry.modifiedAt ? new Date(entry.modifiedAt) : undefined
       const compareMtime =
@@ -902,12 +988,33 @@ export class FtpService {
   private async buildUploadTasks(
     config: AppConfig,
     localEntries: Map<string, LocalEntry>,
-    remoteEntries: Map<string, RemoteEntry>
+    remoteEntries: Map<string, RemoteEntry>,
+    controller: TransferController,
+    progress: CompareHandler
   ): Promise<TransferTask[]> {
     const tasks: TransferTask[] = []
-    for (const [relativePath, entry] of [...localEntries.entries()].sort(([a], [b]) =>
-      a.localeCompare(b)
-    )) {
+    const files = [...localEntries.entries()].sort(([left], [right]) => left.localeCompare(right))
+    const startedAt = Date.now()
+    let compared = 0
+    let lastEmitAt = 0
+
+    for (const [relativePath, entry] of files) {
+      controller.throwIfCancelled()
+      await controller.waitIfPaused()
+      compared += 1
+      const now = Date.now()
+      if (now - lastEmitAt >= 80 || compared === files.length) {
+        progress({
+          directories: 0,
+          files: compared,
+          totalFiles: files.length,
+          bytes: 0,
+          currentPath: relativePath,
+          elapsedMs: now - startedAt,
+          phase: 'compare'
+        })
+        lastEmitAt = now
+      }
       const remoteEntry = remoteEntries.get(relativePath)
       if (
         remoteEntry &&

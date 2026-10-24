@@ -65,10 +65,11 @@ export interface ScanProgress {
   mode: OperationMode
   directories: number
   files: number
+  totalFiles?: number
   bytes: number
   currentPath: string
   elapsedMs: number
-  phase: 'local' | 'remote'
+  phase: 'local' | 'remote' | 'compare'
 }
 
 export interface TransferProgress {

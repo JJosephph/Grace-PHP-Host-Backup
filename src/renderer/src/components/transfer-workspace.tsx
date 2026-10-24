@@ -1,21 +1,14 @@
 import {
   CalendarDays,
-  ChevronDown,
-  ChevronUp,
   FolderSearch,
   HardDrive,
   Server,
   Settings2
 } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
-import { useState } from 'react'
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { appendPathSegment, formatBackupDate } from '../../../shared/backup-path'
-import { BrowserPanel } from './browser-panel'
 import { TransferDashboard } from './transfer-dashboard'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
-import { cn } from '@renderer/lib/utils'
 import { useAppStore } from '@renderer/store/use-app-store'
 
 interface TransferWorkspaceProps {
@@ -41,7 +34,6 @@ export function TransferWorkspace({
 }: TransferWorkspaceProps): React.JSX.Element {
   const config = useAppStore((state) => state.config)
   const patchConfig = useAppStore((state) => state.patchConfig)
-  const [showBrowser, setShowBrowser] = useState(false)
   const backupDestination =
     mode === 'download' && config.timestampFolder && config.localRoot.trim()
       ? appendPathSegment(config.localRoot, formatBackupDate())
@@ -120,44 +112,6 @@ export function TransferWorkspace({
         onResume={onResume}
         onOpenFolder={onOpenFolder}
       />
-
-      <div className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-3">
-        <div>
-          <div className="text-base font-semibold">需要检查文件吗？</div>
-          <div className="mt-0.5 text-sm text-muted">本地与远端目录可以按需展开。</div>
-        </div>
-        <Button variant="secondary" onClick={() => setShowBrowser((value) => !value)}>
-          {showBrowser ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-          {showBrowser ? '收起文件浏览' : '查看文件浏览'}
-        </Button>
-      </div>
-
-      <AnimatePresence initial={false}>
-        {showBrowser && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 380 }}
-            exit={{ opacity: 0, height: 0 }}
-            className="min-h-0 overflow-hidden rounded-lg border border-border bg-surface"
-          >
-            <PanelGroup direction="horizontal" className="h-full">
-              <Panel defaultSize={50} minSize={30}>
-                <BrowserPanel kind="local" rootPath={config.localRoot} />
-              </Panel>
-              <PanelResizeHandle
-                className={cn(
-                  'group relative w-px bg-border transition',
-                  'after:absolute after:inset-y-0 after:-left-1.5 after:w-3',
-                  'hover:bg-primary/50 data-[resize-handle-active]:bg-primary'
-                )}
-              />
-              <Panel defaultSize={50} minSize={30}>
-                <BrowserPanel kind="remote" />
-              </Panel>
-            </PanelGroup>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }
