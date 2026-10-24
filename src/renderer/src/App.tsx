@@ -15,7 +15,7 @@ import {
   WifiOff
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { BrowserPanel } from './components/browser-panel'
 import { LogConsole } from './components/log-console'
 import { SettingsPanel } from './components/settings-panel'
@@ -61,7 +61,7 @@ const navItems: Array<{
 const viewMeta: Record<AppView, { title: string; description: string }> = {
   backup: {
     title: '一键备份',
-    description: '从 FTP 远端直接下载完整目录，保留目录结构，不压缩整站。'
+    description: '保留目录结构，优先复用最近日期备份，只下载新增或修改文件。'
   },
   upload: {
     title: '上传迁移',
@@ -94,6 +94,7 @@ export function App(): React.JSX.Element {
   const appendLog = useAppStore((state) => state.appendLog)
   const patchConfig = useAppStore((state) => state.patchConfig)
   const setReady = useAppStore((state) => state.setReady)
+  const [lastBackupRoot, setLastBackupRoot] = useState<string | null>(null)
 
   useEffect(() => {
     const unsubscribeLog = window.grace.onLog(appendLog)
@@ -166,6 +167,7 @@ export function App(): React.JSX.Element {
     setStatus('connecting')
     setScanProgress(null)
     setTransferProgress(null)
+    if (mode === 'download') setLastBackupRoot(null)
     try {
       const saved = await window.grace.saveConfig(config)
       markSaved(saved)
@@ -174,11 +176,12 @@ export function App(): React.JSX.Element {
         config: saved,
         localRoot: saved.localRoot
       })
+      if (mode === 'download') setLastBackupRoot(result.localRoot)
       appendLog({
         id: `${Date.now()}-result`,
         time: new Date().toISOString(),
         level: result.failures.length > 0 ? 'warning' : 'success',
-        message: `任务完成：计划 ${result.files} 个，成功 ${result.completed} 个，跳过 ${result.skipped} 个，失败 ${result.failures.length} 个。`
+        message: `任务完成：计划 ${result.files} 个，成功 ${result.completed} 个（本地复用 ${result.copied} 个），跳过 ${result.skipped} 个，失败 ${result.failures.length} 个。目录：${result.localRoot}`
       })
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
@@ -201,9 +204,10 @@ export function App(): React.JSX.Element {
   }
 
   const openFolder = async (): Promise<void> => {
-    if (!config.localRoot) return
+    const target = view === 'backup' && lastBackupRoot ? lastBackupRoot : config.localRoot
+    if (!target) return
     try {
-      await window.grace.openPath(config.localRoot)
+      await window.grace.openPath(target)
     } catch (error) {
       appendLog({
         id: `${Date.now()}-open-path-error`,
@@ -306,7 +310,7 @@ export function App(): React.JSX.Element {
               </div>
             </div>
               <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
-                <span className="font-mono text-xs text-muted">v0.2.3</span>
+                <span className="font-mono text-xs text-muted">v0.2.4</span>
                 <span className={cn('text-xs', dirty ? 'text-warning' : 'text-muted')}>
                   {dirty ? '有未保存修改' : '设置已同步'}
                 </span>

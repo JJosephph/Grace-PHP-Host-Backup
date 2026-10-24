@@ -1,8 +1,10 @@
 import { Client, type FileInfo } from 'basic-ftp'
+import { createHash } from 'node:crypto'
 import { createReadStream, createWriteStream } from 'node:fs'
-import { mkdir, rename, stat, unlink } from 'node:fs/promises'
-import { dirname, join, posix, resolve } from 'node:path'
+import { copyFile, mkdir, readdir, rename, stat, unlink } from 'node:fs/promises'
+import { basename, dirname, join, posix, resolve } from 'node:path'
 import { Transform, Writable } from 'node:stream'
+import { formatBackupDate } from '../shared/backup-path'
 import type {
   AppConfig,
   BrowseResult,
@@ -33,6 +35,7 @@ interface TransferTask {
   target: string
   size: number
   modifiedAt?: Date
+  copyFrom?: string
 }
 
 interface ScanResult {
@@ -41,6 +44,14 @@ interface ScanResult {
   files: number
   bytes: number
 }
+
+interface RemoteDigest {
+  algorithm: string
+  value: string
+}
+
+const REMOTE_DIGEST_COMMANDS = ['XSHA256', 'SHA256', 'XSHA1', 'XSHA', 'XMD5', 'MD5']
+type DigestAlgorithm = 'sha256' | 'sha1' | 'md5'
 
 class TransferCancelled extends Error {
   constructor() {
@@ -207,6 +218,45 @@ async function fileSize(path: string): Promise<number> {
   }
 }
 
+async function findPreviousBackupRoot(
+  baseRoot: string,
+  currentFolder: string
+): Promise<string | null> {
+  const entries = await readdir(baseRoot, { withFileTypes: true }).catch(() => [])
+  const previousFolders = entries
+    .filter(
+      (entry) =>
+        entry.isDirectory() &&
+        /^\d{4}-\d{2}-\d{2}$/.test(entry.name) &&
+        entry.name < currentFolder
+    )
+    .map((entry) => entry.name)
+    .sort((left, right) => right.localeCompare(left))
+
+  return previousFolders[0] ? join(baseRoot, previousFolders[0]) : null
+}
+
+function digestAlgorithm(command: string): DigestAlgorithm {
+  const normalized = command.toUpperCase()
+  if (normalized.includes('256')) return 'sha256'
+  if (normalized.includes('SHA1') || normalized === 'XSHA') return 'sha1'
+  return 'md5'
+}
+
+async function hashFile(path: string, algorithm: DigestAlgorithm): Promise<string> {
+  const hash = createHash(algorithm)
+  for await (const chunk of createReadStream(path)) {
+    hash.update(chunk)
+  }
+  return hash.digest('hex')
+}
+
+function parseRemoteDigest(message: string): string | null {
+  const matches = message.match(/\b[a-fA-F0-9]{32,128}\b/g)
+  if (!matches || matches.length === 0) return null
+  return matches.sort((left, right) => right.length - left.length)[0].toLowerCase()
+}
+
 class CountingWritable extends Writable {
   private readonly output: ReturnType<typeof createWriteStream>
   private bytes = 0
@@ -287,6 +337,8 @@ export class FtpService {
   private configFingerprint = ''
   private connectedAt = ''
   private activeTransfer = false
+  private checksumFallbackLogged = false
+  private remoteDigestCommand: string | null | undefined = undefined
   private readonly controller = new TransferController()
 
   constructor(
@@ -360,16 +412,34 @@ export class FtpService {
     localRoot: string
   ): Promise<TransferResult> {
     if (this.isRunning()) throw new Error('已有任务正在运行。')
+    if (!localRoot.trim()) throw new Error('请先选择本地目录。')
     this.controller.reset()
     this.disconnect()
     this.activeTransfer = true
+    this.checksumFallbackLogged = false
+    this.remoteDigestCommand = undefined
 
     const startedAt = Date.now()
+    const backupDateFolder = mode === 'download' && config.timestampFolder ? formatBackupDate() : null
+    const transferLocalRoot = backupDateFolder ? join(localRoot, backupDateFolder) : localRoot
+    let previousBackupRoot: string | null = null
     const status: OperationStatus = mode === 'download' ? 'scanning-remote' : 'scanning-local'
     this.onStatus(status)
     let transferClient: Client | null = null
 
     try {
+      if (mode === 'download' && config.timestampFolder) {
+        await mkdir(transferLocalRoot, { recursive: true })
+        previousBackupRoot = await findPreviousBackupRoot(localRoot, backupDateFolder ?? '')
+        this.log(
+          'info',
+          previousBackupRoot
+            ? `一键备份：已找到 ${basename(previousBackupRoot)} 的备份，正在比对新增和修改文件。`
+            : '一键备份：未找到更早的日期备份，本次将执行完整备份。'
+        )
+        this.log('info', `本次备份目录：${transferLocalRoot}`)
+      }
+
       transferClient = await this.connect(config, this.controller)
       this.controller.attach(transferClient)
       this.client = transferClient
@@ -380,7 +450,7 @@ export class FtpService {
         mode === 'upload'
           ? await this.scanLocal(
               config,
-              localRoot,
+              transferLocalRoot,
               this.controller,
               (progress) => this.onScan({ ...progress, mode })
             )
@@ -398,35 +468,55 @@ export class FtpService {
       this.onStatus('preparing')
       const tasks =
         mode === 'download'
-          ? await this.buildDownloadTasks(config, localRoot, remoteEntries.entries)
+          ? await this.buildDownloadTasks(
+              config,
+              transferLocalRoot,
+              remoteEntries.entries,
+              previousBackupRoot
+            )
           : await this.buildUploadTasks(config, localEntries, remoteEntries.entries)
 
       const totalBytes = tasks.reduce((sum, task) => sum + task.size, 0)
+      const copyTasks = tasks.filter((task) => task.copyFrom).length
+      const downloadTasks = tasks.length - copyTasks
       const skipped = Math.max(
         0,
         (mode === 'download' ? remoteEntries.files : localEntries.size) - tasks.length
       )
-      this.log('info', `计划 ${tasks.length} 个文件，共 ${totalBytes} 字节，跳过 ${skipped} 个未变化文件。`)
+      this.log(
+        'info',
+        mode === 'download'
+          ? `计划 ${tasks.length} 个文件，共 ${totalBytes} 字节；本地复用 ${copyTasks} 个，远端下载 ${downloadTasks} 个，跳过 ${skipped} 个未变化文件。`
+          : `计划 ${tasks.length} 个文件，共 ${totalBytes} 字节，跳过 ${skipped} 个未变化文件。`
+      )
 
       if (tasks.length === 0) {
         const result: TransferResult = {
           mode,
           files: 0,
           completed: 0,
+          copied: 0,
           skipped,
           failures: [],
-          localRoot,
+          localRoot: transferLocalRoot,
           elapsedMs: Date.now() - startedAt
         }
         this.onStatus('completed')
-        this.log('success', '没有需要传输的文件，目标目录已经是最新状态。')
+        this.log('success', `无新增或修改，今天无需备份；目标目录已经是最新状态：${transferLocalRoot}`)
         return result
       }
 
+      if (mode === 'download') {
+        this.log(
+          'info',
+          `检测到 ${tasks.length} 个需要处理的文件（本地复用 ${copyTasks} 个，远端下载 ${downloadTasks} 个），正在增量备份。`
+        )
+      }
       this.onStatus('transferring')
       const tracker = new ProgressTracker(totalBytes)
       let bytesDone = 0
       let completed = 0
+      let copied = 0
       const failures: TransferResult['failures'] = []
       const startedAtText = new Date().toISOString()
 
@@ -450,6 +540,7 @@ export class FtpService {
             currentFileBytes: fileDone,
             currentFileTotal: task.size,
             completed,
+            copied,
             skipped,
             failed: failures.length,
             startedAt: startedAtText,
@@ -459,13 +550,13 @@ export class FtpService {
 
         this.log('info', `${mode === 'download' ? '下载' : '上传'} ${task.relative}`)
         try {
-          transferClient = await this.withRetry(
+          const outcome = await this.withRetry(
             transferClient,
             config,
             this.controller,
             task.relative,
             async (activeClient) => {
-              await this.transferOne(
+              return this.transferOne(
                 mode,
                 activeClient,
                 task,
@@ -475,12 +566,14 @@ export class FtpService {
                   emit()
                 }
               )
-              fileDone = task.size
             }
           )
+          transferClient = outcome.client
+          fileDone = task.size
           this.client = transferClient
           bytesDone += task.size
           completed += 1
+          if (outcome.copied) copied += 1
           emit(true)
         } catch (error) {
           if (error instanceof TransferCancelled) throw error
@@ -496,9 +589,10 @@ export class FtpService {
         mode,
         files: tasks.length,
         completed,
+        copied,
         skipped,
         failures,
-        localRoot,
+        localRoot: transferLocalRoot,
         elapsedMs: Date.now() - startedAt
       }
       this.onStatus(failures.length > 0 ? 'error' : 'completed')
@@ -761,7 +855,8 @@ export class FtpService {
   private async buildDownloadTasks(
     config: AppConfig,
     localRoot: string,
-    remoteEntries: Map<string, RemoteEntry>
+    remoteEntries: Map<string, RemoteEntry>,
+    previousRoot: string | null
   ): Promise<TransferTask[]> {
     const tasks: TransferTask[] = []
     for (const [relativePath, entry] of [...remoteEntries.entries()].sort(([a], [b]) =>
@@ -769,20 +864,36 @@ export class FtpService {
     )) {
       if (entry.isDirectory) continue
       const localPath = join(localRoot, ...relativePath.split('/'))
+      const modifiedAt = entry.modifiedAt ? new Date(entry.modifiedAt) : undefined
+      const compareMtime =
+        config.compareMtime ||
+        Boolean(config.timestampFolder && modifiedAt && !Number.isNaN(modifiedAt.getTime()))
       const localInfo = await stat(localPath).catch(() => null)
       if (
         localInfo?.isFile() &&
         localInfo.size === entry.size &&
-        (!config.compareMtime || isSameMtime(localInfo.mtime.getTime(), entry.modifiedAt ? new Date(entry.modifiedAt) : undefined))
+        (!compareMtime || isSameMtime(localInfo.mtime.getTime(), modifiedAt))
       ) {
         continue
+      }
+      let copyFrom: string | undefined
+      if (previousRoot) {
+        const previousPath = join(previousRoot, ...relativePath.split('/'))
+        const previousInfo = await stat(previousPath).catch(() => null)
+        if (previousInfo?.isFile() && previousInfo.size === entry.size) {
+          // 远端有修改时间时，优先按大小和修改时间判断能否直接复用本地文件。
+          if (!modifiedAt || isSameMtime(previousInfo.mtime.getTime(), modifiedAt)) {
+            copyFrom = previousPath
+          }
+        }
       }
       tasks.push({
         relative: relativePath,
         source: entry.path,
         target: localPath,
         size: entry.size,
-        modifiedAt: entry.modifiedAt ? new Date(entry.modifiedAt) : undefined
+        modifiedAt,
+        copyFrom
       })
     }
     return tasks
@@ -826,6 +937,7 @@ export class FtpService {
     task: TransferTask
   ): Promise<number> {
     if (mode === 'download') {
+      if (task.copyFrom) return 0
       const partPath = `${task.target}.part`
       const partSize = await fileSize(partPath)
       return partSize > 0 && partSize < task.size ? partSize : 0
@@ -835,26 +947,90 @@ export class FtpService {
     return remoteSize > 0 && remoteSize < task.size ? remoteSize : 0
   }
 
+  private async remoteDigest(client: Client, path: string): Promise<RemoteDigest | null> {
+    const commands = this.remoteDigestCommand
+      ? [this.remoteDigestCommand]
+      : REMOTE_DIGEST_COMMANDS
+
+    for (const command of commands) {
+      try {
+        const response = await client.sendIgnoringError(`${command} ${path}`)
+        if (response.code < 200 || response.code >= 300) continue
+        const value = parseRemoteDigest(response.message)
+        if (value) {
+          this.remoteDigestCommand = command
+          return { algorithm: command, value }
+        }
+      } catch {
+        break
+      }
+    }
+
+    if (this.remoteDigestCommand === undefined) this.remoteDigestCommand = null
+    return null
+  }
+
+  private logChecksumFallback(): void {
+    if (this.checksumFallbackLogged) return
+    this.checksumFallbackLogged = true
+    this.log(
+      'warning',
+      '当前 FTP 服务未提供 XSHA256/SHA256/XMD5 文件哈希，已通过文件大小校验；内容级校验不可用。'
+    )
+  }
+
   private async transferOne(
     mode: Extract<OperationMode, 'download' | 'upload'>,
     client: Client,
     task: TransferTask,
     controller: TransferController,
     onBytes: (amount: number) => void
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (mode === 'download') {
+      if (task.copyFrom) {
+        await controller.waitIfPaused()
+        try {
+          await mkdir(dirname(task.target), { recursive: true })
+          await copyFile(task.copyFrom, task.target)
+          const copiedSize = await fileSize(task.target)
+          if (copiedSize !== task.size) {
+            throw new Error(`本地复用大小不一致，期望 ${task.size}，实际 ${copiedSize}。`)
+          }
+          await setLocalMtime(task.target, task.modifiedAt)
+          onBytes(task.size)
+          return true
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error)
+          this.log('warning', `本地复用失败，改为从远端下载：${task.relative}（${message}）`)
+          task.copyFrom = undefined
+        }
+      }
+
       await mkdir(dirname(task.target), { recursive: true })
+      const expectedDigest = await this.remoteDigest(client, task.source)
       const partPath = `${task.target}.part`
       const offset = await fileSize(partPath)
-      const safeOffset = offset > task.size ? 0 : offset
-      if (safeOffset > 0 && safeOffset >= task.size) {
-        await rename(partPath, task.target)
-        await setLocalMtime(task.target, task.modifiedAt)
-        return
+      if (offset > task.size) {
+        await unlink(partPath).catch(() => undefined)
+      }
+      let safeOffset = offset > task.size ? 0 : offset
+      if (safeOffset >= task.size) {
+        const partDigest = expectedDigest
+          ? await hashFile(partPath, digestAlgorithm(expectedDigest.algorithm))
+          : null
+        if (!expectedDigest || partDigest === expectedDigest.value) {
+          await rename(partPath, task.target)
+          await setLocalMtime(task.target, task.modifiedAt)
+          return false
+        }
+        await unlink(partPath).catch(() => undefined)
       }
       if (safeOffset > 0) {
         const partInfo = await stat(partPath).catch(() => null)
-        if (!partInfo || partInfo.size !== safeOffset) await unlink(partPath).catch(() => undefined)
+        if (!partInfo || partInfo.size !== safeOffset) {
+          await unlink(partPath).catch(() => undefined)
+          safeOffset = 0
+        }
       }
       const sink = new CountingWritable(partPath, controller, onBytes)
       await client.downloadTo(sink, task.source, safeOffset)
@@ -862,9 +1038,20 @@ export class FtpService {
       if (actual !== task.size) {
         throw new Error(`下载大小不一致，期望 ${task.size}，实际 ${actual}。`)
       }
+      if (expectedDigest) {
+        const partDigest = await hashFile(partPath, digestAlgorithm(expectedDigest.algorithm))
+        if (partDigest !== expectedDigest.value) {
+          await unlink(partPath).catch(() => undefined)
+          throw new Error(
+            `下载内容校验失败（${expectedDigest.algorithm}），临时文件与远端哈希不一致。`
+          )
+        }
+      } else {
+        this.logChecksumFallback()
+      }
       await rename(partPath, task.target)
       await setLocalMtime(task.target, task.modifiedAt)
-      return
+      return false
     }
 
     const remoteDirectory = posix.dirname(task.target)
@@ -877,10 +1064,24 @@ export class FtpService {
     uploadSource.pipe(uploadCounter)
     await client.uploadFrom(uploadCounter, task.target)
     const actual = await client.size(task.target).catch(() => null)
-    if (actual !== null && actual !== task.size) {
+    if (actual === null) {
+      throw new Error('无法读取远端文件大小，不能确认上传是否完整。')
+    }
+    if (actual !== task.size) {
       throw new Error(`上传大小不一致，期望 ${task.size}，实际 ${actual}。`)
     }
-    return
+    const remoteDigest = await this.remoteDigest(client, task.target)
+    if (remoteDigest) {
+      const localDigest = await hashFile(task.source, digestAlgorithm(remoteDigest.algorithm))
+      if (localDigest !== remoteDigest.value) {
+        throw new Error(
+          `上传内容校验失败（${remoteDigest.algorithm}），远端文件与本地哈希不一致。`
+        )
+      }
+    } else {
+      this.logChecksumFallback()
+    }
+    return false
   }
 
   private async withRetry(
@@ -888,13 +1089,13 @@ export class FtpService {
     config: AppConfig,
     controller: TransferController,
     label: string,
-    action: (activeClient: Client) => Promise<void>
-  ): Promise<Client> {
+    action: (activeClient: Client) => Promise<boolean>
+  ): Promise<{ client: Client; copied: boolean }> {
     let activeClient = client
     for (let attempt = 0; attempt <= config.retries; attempt += 1) {
       try {
-        await action(activeClient)
-        return activeClient
+        const copied = await action(activeClient)
+        return { client: activeClient, copied }
       } catch (error) {
         if (error instanceof TransferCancelled || controller.cancelled) throw error
         if (attempt >= config.retries) throw error
@@ -905,6 +1106,6 @@ export class FtpService {
         activeClient = await this.connect(config, controller)
       }
     }
-    return activeClient
+    throw new Error('重试流程异常结束。')
   }
 }

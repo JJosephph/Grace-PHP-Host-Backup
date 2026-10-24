@@ -1,7 +1,16 @@
-import { ChevronDown, ChevronUp, FolderSearch, HardDrive, Server, Settings2 } from 'lucide-react'
+import {
+  CalendarDays,
+  ChevronDown,
+  ChevronUp,
+  FolderSearch,
+  HardDrive,
+  Server,
+  Settings2
+} from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
+import { appendPathSegment, formatBackupDate } from '../../../shared/backup-path'
 import { BrowserPanel } from './browser-panel'
 import { TransferDashboard } from './transfer-dashboard'
 import { Button } from './ui/button'
@@ -33,6 +42,10 @@ export function TransferWorkspace({
   const config = useAppStore((state) => state.config)
   const patchConfig = useAppStore((state) => state.patchConfig)
   const [showBrowser, setShowBrowser] = useState(false)
+  const backupDestination =
+    mode === 'download' && config.timestampFolder && config.localRoot.trim()
+      ? appendPathSegment(config.localRoot, formatBackupDate())
+      : ''
 
   return (
     <div className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col gap-4">
@@ -46,6 +59,20 @@ export function TransferWorkspace({
               ? '选择本地保存位置，软件会直接下载远端文件，不压缩整站。'
               : '选择已经备份好的完整目录，软件只上传变化文件。'}
           </p>
+          {backupDestination && (
+            <div className="mt-3 flex items-center gap-2 rounded-md border border-border bg-background-deep px-3.5 py-2.5 text-sm text-muted-strong">
+              <CalendarDays className="size-4 shrink-0 text-primary" />
+              <span className="min-w-0">
+                本次备份目录
+                <span className="ml-2 break-all font-mono text-foreground">
+                  {backupDestination}
+                </span>
+                <span className="mt-1 block text-xs text-muted">
+                  会优先复用最近一次日期备份，只下载新增或修改文件。
+                </span>
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="space-y-3">

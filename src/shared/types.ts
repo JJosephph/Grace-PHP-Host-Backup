@@ -87,6 +87,7 @@ export interface TransferProgress {
   speed: number
   etaSeconds: number | null
   completed: number
+  copied: number
   skipped: number
   failed: number
   startedAt: string
@@ -103,6 +104,7 @@ export interface TransferResult {
   mode: Extract<OperationMode, 'download' | 'upload'>
   files: number
   completed: number
+  copied: number
   skipped: number
   failures: Array<{ relative: string; message: string }>
   localRoot: string

@@ -34,7 +34,7 @@ const statusText: Record<OperationStatus, string> = {
   connecting: '正在连接',
   'scanning-local': '正在检查本地文件',
   'scanning-remote': '正在检查远端文件',
-  preparing: '正在生成任务',
+  preparing: '正在比对增量',
   transferring: '正在传输',
   paused: '已暂停',
   completed: '已经完成',
@@ -172,8 +172,8 @@ export function TransferDashboard({
               />
               <SimpleStat
                 icon={<CheckCircle2 />}
-                label="完成 / 跳过 / 失败"
-                value={`${transfer?.completed ?? 0} / ${transfer?.skipped ?? 0} / ${transfer?.failed ?? 0}`}
+                label="完成 / 本地复用 / 跳过 / 失败"
+                value={`${transfer?.completed ?? 0} / ${transfer?.copied ?? 0} / ${transfer?.skipped ?? 0} / ${transfer?.failed ?? 0}`}
               />
             </>
           )}

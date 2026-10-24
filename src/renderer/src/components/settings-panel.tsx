@@ -222,8 +222,8 @@ export function SettingsPanel(): React.JSX.Element {
         />
         <div className="grid gap-5 p-5 md:grid-cols-2">
           <ToggleLine
-            label="创建时间目录"
-            description="备份时自动建立主机名与时间戳目录"
+            label="按日期创建备份目录"
+            description="同日覆盖，异日新建；优先复用上次未变化文件"
             checked={config.timestampFolder}
             onCheckedChange={(value) => patchConfig({ timestampFolder: value })}
           />
@@ -249,7 +249,7 @@ export function SettingsPanel(): React.JSX.Element {
             </div>
             <p className="mt-2 text-sm leading-6 text-muted">
               软件不会删除远端文件，也不会在失败后留下伪装的完整文件。下载使用 .part
-              临时文件，完成后才替换目标。
+              临时文件，完成后才替换目标；服务器支持哈希命令时会进行内容校验，否则至少校验文件大小。
             </p>
           </div>
         </div>
