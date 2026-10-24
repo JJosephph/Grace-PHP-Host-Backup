@@ -4,6 +4,7 @@ import type { AppApi } from '../shared/types'
 const api: AppApi = {
   loadConfig: () => ipcRenderer.invoke('grace:config:load'),
   saveConfig: (config) => ipcRenderer.invoke('grace:config:save', config),
+  checkForUpdate: () => ipcRenderer.invoke('grace:update:check'),
   chooseLocalDirectory: (defaultPath) =>
     ipcRenderer.invoke('grace:choose-directory', defaultPath),
   testConnection: (config) => ipcRenderer.invoke('grace:test-connection', config),

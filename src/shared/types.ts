@@ -135,9 +135,19 @@ export interface LocalBrowseResult {
   entries: LocalEntry[]
 }
 
+export interface UpdateCheckResult {
+  currentVersion: string
+  latestVersion: string
+  updateAvailable: boolean
+  releaseUrl: string
+  downloadUrl?: string
+  publishedAt?: string
+}
+
 export interface AppApi {
   loadConfig: () => Promise<AppConfig>
   saveConfig: (config: AppConfig) => Promise<AppConfig>
+  checkForUpdate: () => Promise<UpdateCheckResult>
   chooseLocalDirectory: (defaultPath?: string) => Promise<string | null>
   testConnection: (config: AppConfig) => Promise<ConnectionSummary>
   browseRemote: (request: BrowseRequest) => Promise<BrowseResult>

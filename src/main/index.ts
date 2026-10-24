@@ -10,6 +10,7 @@ import type {
 } from '../shared/types'
 import { loadConfig, saveConfig } from './config'
 import { FtpService } from './ftp'
+import { checkForUpdate } from './updater'
 
 let mainWindow: BrowserWindow | null = null
 let ftpService: FtpService | null = null
@@ -39,6 +40,7 @@ function createService(): FtpService {
 function registerIpc(): void {
   ipcMain.handle('grace:config:load', () => loadConfig())
   ipcMain.handle('grace:config:save', (_event, config: AppConfig) => saveConfig(config))
+  ipcMain.handle('grace:update:check', () => checkForUpdate())
 
   ipcMain.handle(
     'grace:choose-directory',

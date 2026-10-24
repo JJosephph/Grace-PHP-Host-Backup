@@ -1,12 +1,15 @@
 import {
+  ArrowUpCircle,
   CloudDownload,
   CloudUpload,
+  Download,
   FolderTree,
   Github,
   Heart,
   LoaderCircle,
   MessageCircle,
   RadioTower,
+  RefreshCw,
   Settings2,
   ShieldCheck,
   Star,
@@ -15,7 +18,7 @@ import {
   WifiOff
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BrowserPanel } from './components/browser-panel'
 import { LogConsole } from './components/log-console'
 import { SettingsPanel } from './components/settings-panel'
@@ -25,6 +28,7 @@ import { Button } from './components/ui/button'
 import { Tooltip, TooltipProvider } from './components/ui/tooltip'
 import { cn } from './lib/utils'
 import { useAppStore, type AppView } from './store/use-app-store'
+import type { UpdateCheckResult } from '../../shared/types'
 
 const navItems: Array<{
   id: AppView
@@ -95,6 +99,45 @@ export function App(): React.JSX.Element {
   const patchConfig = useAppStore((state) => state.patchConfig)
   const setReady = useAppStore((state) => state.setReady)
   const [lastBackupRoot, setLastBackupRoot] = useState<string | null>(null)
+  const [updateInfo, setUpdateInfo] = useState<UpdateCheckResult | null>(null)
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
+
+  const checkUpdates = useCallback(
+    async (manual = false): Promise<void> => {
+      setCheckingUpdate(true)
+      try {
+        const info = await window.grace.checkForUpdate()
+        setUpdateInfo(info)
+        if (info.updateAvailable) {
+          appendLog({
+            id: `${Date.now()}-update-available`,
+            time: new Date().toISOString(),
+            level: 'success',
+            message: `发现新版本 v${info.latestVersion}，当前版本 v${info.currentVersion}。`
+          })
+        } else if (manual) {
+          appendLog({
+            id: `${Date.now()}-update-current`,
+            time: new Date().toISOString(),
+            level: 'info',
+            message: `当前已是最新版本 v${info.currentVersion}。`
+          })
+        }
+      } catch (error) {
+        if (manual) {
+          appendLog({
+            id: `${Date.now()}-update-error`,
+            time: new Date().toISOString(),
+            level: 'error',
+            message: `检查更新失败：${error instanceof Error ? error.message : String(error)}`
+          })
+        }
+      } finally {
+        setCheckingUpdate(false)
+      }
+    },
+    [appendLog]
+  )
 
   useEffect(() => {
     const unsubscribeLog = window.grace.onLog(appendLog)
@@ -117,6 +160,7 @@ export function App(): React.JSX.Element {
         setConfig(loaded)
         markSaved(loaded)
         setReady(true)
+        void checkUpdates(false)
       })
       .catch((error) => {
         setReady(true)
@@ -142,7 +186,8 @@ export function App(): React.JSX.Element {
     setReady,
     setScanProgress,
     setStatus,
-    setTransferProgress
+    setTransferProgress,
+    checkUpdates
   ])
 
   const dirty = useMemo(
@@ -218,17 +263,21 @@ export function App(): React.JSX.Element {
     }
   }
 
-  const openProject = async (): Promise<void> => {
+  const openUrl = async (url: string): Promise<void> => {
     try {
-      await window.grace.openExternal('https://github.com/JJosephph/Grace-PHP-Host-Backup')
+      await window.grace.openExternal(url)
     } catch (error) {
       appendLog({
-        id: `${Date.now()}-open-project-error`,
+        id: `${Date.now()}-open-url-error`,
         time: new Date().toISOString(),
         level: 'error',
         message: error instanceof Error ? error.message : String(error)
       })
     }
+  }
+
+  const openProject = async (): Promise<void> => {
+    await openUrl('https://github.com/JJosephph/Grace-PHP-Host-Backup')
   }
 
   if (!ready) {
@@ -310,11 +359,35 @@ export function App(): React.JSX.Element {
               </div>
             </div>
               <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
-                <span className="font-mono text-xs text-muted">v0.2.5</span>
+                <span className="font-mono text-xs text-muted">v0.2.6</span>
                 <span className={cn('text-xs', dirty ? 'text-warning' : 'text-muted')}>
                   {dirty ? '有未保存修改' : '设置已同步'}
                 </span>
               </div>
+              <Button
+                variant={updateInfo?.updateAvailable ? 'default' : 'ghost'}
+                size="sm"
+                className="mt-2 w-full"
+                disabled={checkingUpdate}
+                onClick={() =>
+                  updateInfo?.updateAvailable
+                    ? void openUrl(updateInfo.releaseUrl)
+                    : void checkUpdates(true)
+                }
+              >
+                {updateInfo?.updateAvailable ? (
+                  <Download className="size-3.5" />
+                ) : (
+                  <RefreshCw className={cn('size-3.5', checkingUpdate && 'animate-spin')} />
+                )}
+                {checkingUpdate
+                  ? '检查中...'
+                  : updateInfo?.updateAvailable
+                    ? `下载 v${updateInfo.latestVersion}`
+                    : updateInfo
+                      ? '已是最新版本'
+                      : '检查更新'}
+              </Button>
             </div>
 
             <div className="rounded-lg border border-border bg-surface p-4">
@@ -365,6 +438,17 @@ export function App(): React.JSX.Element {
             </div>
 
             <div className="flex items-center gap-2">
+              {updateInfo?.updateAvailable && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="border-warning/50 text-warning"
+                  onClick={() => void openUrl(updateInfo.releaseUrl)}
+                >
+                  <ArrowUpCircle className="size-3.5" />
+                  发现 v{updateInfo.latestVersion}
+                </Button>
+              )}
               <Tooltip content={connection ? `最近连接 ${connection.host}` : '尚未测试连接'}>
                 <div
                   className={cn(
